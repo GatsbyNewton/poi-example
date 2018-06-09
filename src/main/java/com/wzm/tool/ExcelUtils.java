@@ -18,11 +18,17 @@ import java.util.Set;
 public class ExcelUtils {
     private static final Logger LOGGER = LoggerFactory.getLogger(ExcelUtils.class);
 
+    /**
+     * 创建一个专门用来存放地区信息的隐藏sheet页, 因此也不能在现实页之前创建，否则无法隐藏。
+     * @param workbook
+     * @param l1DropDownList 父下拉列表
+     * @param dependentDropDownListMap 级联列映射
+     * @param hiddenSheetName 隐藏sheet页名称
+     * @param l1Value 隐藏sheet页中父下拉列表的title
+     */
     public static void createHiddenSheet(Workbook workbook, List<String> l1DropDownList,
                                          Map<String, List<String>> dependentDropDownListMap,
                                          String hiddenSheetName, String l1Value){
-        //创建一个专门用来存放地区信息的隐藏sheet页
-        //因此也不能在现实页之前创建，否则无法隐藏。
         Sheet hiddenSheet = workbook.createSheet(hiddenSheetName);
         /* 这一行作用是将此sheet隐藏，功能未完成时注释此行,可以查看隐藏sheet中信息是否正确 */
         //book.setSheetHidden(book.getSheetIndex(hideSheet), true);
@@ -58,6 +64,15 @@ public class ExcelUtils {
         }
     }
 
+    /**
+     * 设置三级级联列
+     * @param sheet 主sheet页
+     * @param l1DropDownList 父下拉列表
+     * @param firstRow 父下拉列表生效起始行，从0开始计数
+     * @param lastRow 父下拉列表生效终止行，从0开始计数
+     * @param firstCol 父下拉列表生效起始列，从0开始计数
+     * @param lastCol 父下拉列表生效终止列，从0开始计数
+     */
     public static void setThreeLevelDropDownListDependency(Sheet sheet, List<String> l1DropDownList, int firstRow,
                                                            int lastRow, int firstCol, int lastCol){
         DataValidationHelper dvHelper = sheet.getDataValidationHelper();
@@ -77,18 +92,17 @@ public class ExcelUtils {
 
         /* 设置子列表有效性 */
         for (int i = firstRow + 1; i < lastRow + 2; i++) {
-            setDataValidation(String.valueOf((char) ('A' + firstCol)), sheet, i, firstCol + 2);
-            setDataValidation(String.valueOf((char) ('A' + firstCol + 1)), sheet, i, firstCol + 3);
+            setDataValidation(String.valueOf((char) ('A' + firstCol)), sheet, i, firstCol + 1);
+            setDataValidation(String.valueOf((char) ('A' + firstCol + 1)), sheet, i, firstCol + 2);
         }
     }
 
     /**
-     * 设置有效性
-     *
-     * @param offset 主影响单元格所在列，即此单元格由哪个单元格影响联动
+     * 设置级联有效性
+     * @param offset 级联列偏移
      * @param sheet
-     * @param rowNum 行数
-     * @param colNum 列数
+     * @param rowNum 级联列生效行
+     * @param colNum 级联列生效列
      */
     private static void setDataValidation(String offset, Sheet sheet, int rowNum, int colNum) {
         DataValidationHelper dvHelper = sheet.getDataValidationHelper();
@@ -98,24 +112,25 @@ public class ExcelUtils {
     }
 
     /**
-     * 加载下拉列表内容
-     *
-     * @param formulaString
-     * @param naturalRowIndex
-     * @param naturalColumnIndex
+     * 设置级联
+     * @param formulaString 映射函数
+     * @param naturalRowIndex 级联列生效行
+     * @param naturalColumnIndex 级联列生效列
      * @param dvHelper
      * @return
      */
     private static DataValidation getDataValidationByFormula(String formulaString, int naturalRowIndex,
                                                              int naturalColumnIndex, DataValidationHelper dvHelper) {
-        // 加载下拉列表内容
-        // 举例：若formulaString = "INDIRECT($A$2)" 表示规则数据会从名称管理器中获取key与单元格 A2 值相同的数据，
-        // 如果A2是江苏省，那么此处就是江苏省下的市信息。
+        /**
+         * 加载下拉列表内容,
+         * 举例：若formulaString = "INDIRECT($A$2)" 表示规则数据会从名称管理器中获取key与单元格 A2 值相同的数据，
+         * 如果A2是江苏省，那么此处就是江苏省下的市信息。
+         */
         DataValidationConstraint dvConstraint = dvHelper.createFormulaListConstraint(formulaString);
         int firstRow = naturalRowIndex - 1;
         int lastRow = naturalRowIndex - 1;
-        int firstCol = naturalColumnIndex - 1;
-        int lastCol = naturalColumnIndex - 1;
+        int firstCol = naturalColumnIndex;
+        int lastCol = naturalColumnIndex;
         CellRangeAddressList regions = new CellRangeAddressList(firstRow, lastRow, firstCol, lastCol);
         DataValidation dataValidation = dvHelper.createValidation(dvConstraint, regions);
         dataValidation.createPromptBox("下拉选择提示", "请使用下拉方式选择合适的值！");
@@ -133,9 +148,8 @@ public class ExcelUtils {
 
     /**
      * 计算formula
-     *
-     * @param offset   偏移量，如果给0，表示从A列开始，1，就是从B列
-     * @param rowId    第几行
+     * @param offset 偏移量，如果给0，表示从A列开始，1，就是从B列
+     * @param rowId 第几行
      * @param colCount 一共多少列
      * @return 如果给入参 1,1,10. 表示从B1-K1。最终返回 $B$1:$K$1
      */
