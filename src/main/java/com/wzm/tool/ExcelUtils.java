@@ -19,6 +19,34 @@ public class ExcelUtils {
     private static final Logger LOGGER = LoggerFactory.getLogger(ExcelUtils.class);
 
     /**
+     * 创建下拉列表
+     * @param sheet
+     * @param listValue 下拉列表的值
+     * @param firstRow 下拉列表生效起始行，从0开始计数
+     * @param lastRow 下拉列表生效终止行，从0开始计数
+     * @param firstCol 下拉列表生效起始列，从0开始计数
+     * @param lastCol 下拉列表生效终止列，从0开始计数
+     */
+    public static void createDropDownList(Sheet sheet, List<String> listValue, int firstRow,
+                                   int lastRow, int firstCol, int lastCol) {
+        CellRangeAddressList addressList = new CellRangeAddressList(firstRow, lastRow, firstCol, lastCol);
+
+        DataValidationHelper dvHelper = sheet.getDataValidationHelper();
+        DataValidationConstraint dvConstraint = dvHelper.createExplicitListConstraint(
+                listValue.toArray(new String[]{}));
+        DataValidation validation = dvHelper.createValidation(dvConstraint, addressList);
+        validation.createErrorBox("error", "请从下拉列表中选择！");
+        if(validation instanceof XSSFDataValidation) {
+            validation.setSuppressDropDownArrow(true);
+            validation.setShowErrorBox(true);
+        }
+        else {
+            validation.setSuppressDropDownArrow(false);
+        }
+        sheet.addValidationData(validation);
+    }
+
+    /**
      * 创建一个专门用来存放地区信息的隐藏sheet页, 因此也不能在现实页之前创建，否则无法隐藏。
      * @param workbook
      * @param l1DropDownList 父下拉列表

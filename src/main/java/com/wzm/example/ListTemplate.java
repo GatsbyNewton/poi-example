@@ -1,9 +1,12 @@
 package com.wzm.example;
 
 import com.wzm.tool.ExcelUtils;
-import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.ss.util.CellRangeAddressList;
-import org.apache.poi.xssf.usermodel.XSSFDataValidation;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -14,7 +17,7 @@ import java.util.List;
 import java.util.Map;
 
 public class ListTemplate {
-//    private static final Logger LOGGER = LoggerFactory.getLogger(ListTemplate.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ListTemplate.class);
 
     public void createHeader(Workbook workbook, Sheet sheet, List<String> headers){
         Row headerRow = sheet.createRow(0);     //第一个sheet的第一行为标题
@@ -27,24 +30,6 @@ public class ListTemplate {
         }
     }
 
-
-    public void createDropDownList(Sheet sheet, List<String> listValue) {
-        CellRangeAddressList addressList = new CellRangeAddressList(1, 6, 0, 6);
-
-        DataValidationHelper dvHelper = sheet.getDataValidationHelper();
-        DataValidationConstraint dvConstraint = dvHelper.createExplicitListConstraint(
-                listValue.toArray(new String[]{}));
-        DataValidation validation = dvHelper.createValidation(dvConstraint, addressList);
-        validation.createErrorBox("error", "请从下拉列表中选择！");
-        if(validation instanceof XSSFDataValidation) {
-            validation.setSuppressDropDownArrow(true);
-            validation.setShowErrorBox(true);
-        }
-        else {
-            validation.setSuppressDropDownArrow(false);
-        }
-        sheet.addValidationData(validation);
-    }
 
     public void createThreeLevelDependentDropDownList(Workbook workbook, Sheet sheet, List<String> l1DropDownList,
                                             Map<String, List<String>> dependentDropDownListMap, int firstRow,
@@ -60,7 +45,7 @@ public class ListTemplate {
             Workbook workbook = ExcelUtils.createWorkBook(path);
             Sheet sheet = workbook.createSheet("test");
             createHeader(workbook, sheet, headers);
-            createDropDownList(sheet, devices);
+            ExcelUtils.createDropDownList(sheet, devices, 1, 6, 0, 6);
 
             try (OutputStream fileOut = new FileOutputStream(path)) {
                 fileOut.flush();
